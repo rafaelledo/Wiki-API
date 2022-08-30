@@ -18,36 +18,100 @@ const articleSchema = {
 
 const Article = mongoose.model("Article", articleSchema)
 
-app.get("/articles", (req, res) => {
-    Article.find((err, foundArticles) => {
-        if (!err) {
-            res.send(foundArticles)
-        } else {
-            res.send(err)
+app.route("/articles").
+    get((req, res) => {
+        Article.find((err, foundArticles) => {
+            if (!err) {
+                res.send(foundArticles)
+            } else {
+                res.send(err)
+            }
+        })
+    }).
+    post((req, res) => {
+        // POST
+        console.log(req.body.title)
+        console.log(req.body.content)
+
+        // CREATE
+        const newArticle = new Article({
+            title: req.body.title,
+            content: req.body.content
+        })
+
+        newArticle.save((err) => {
+            if (!err) {
+                res.send("New article saved.")
+            } else {
+                res.send(err)
+            }
+        })
+    }).
+    delete((req, res) => {
+        Article.deleteMany((err) => {
+            if (!err) {
+                res.send("Deleted all the documents.")
+            } else {
+                res.send(err)
+            }
+        })
+    })
+
+app.route("/articles/:articleTitle")    
+
+    .get((req, res) => {
+        Article.findOne({title: req.params.articleTitle}, (err, foundArticle) => {
+            if (foundArticle) {
+                res.send(foundArticle)
+            } else {
+                res.send("Article not found")
+            }
+        })
+    })
+
+    .put((req, res) => {
+        try{
+            Article.updateOne(
+                {"title": req.params.articleTitle},
+                {$set: {"title": req.body.title, "content": req.body.content}},
+                (err) => {
+                    if (!err) {
+                        console.log("Document updated")
+                    }
+                }
+            )
+        } catch (e) {
+            console.log(e)
         }
     })
-})
 
-app.post("/articles", (req, res) => {
-    // POST
-    // console.log(req.body.title)
-    // console.log(req.body.content)
-
-    // CREATE
-    const newArticle = new Article({
-        title: req.body.title,
-        content: req.body.content
+    .patch((req, res) => {
+        Article.updateOne(
+            {title: req.params.articleTitle},
+            {$set: req.body},
+            (err) => {
+                if (!err) {
+                    res.send("Article updated")
+                } else {
+                    res.send(err)
+                }
+            }
+        )
     })
 
-    newArticle.save((err) => {
-        if(!err) {
-            res.send("New article saved.")
-        } else {
-            res.send(err)
-        }
+    .delete((req, res) => {
+        Article.deleteOne(
+            {title: req.params.articleTitle},
+            (err) => {
+                if (!err) {
+                    res.send("Article deleted")
+                } else {
+                    res.send(err)
+                }
+            }
+        )
     })
-})
 
-app.listen(3000, function () {
+app.listen(3000, () => {
     console.log("Server started on port 3000")
 })
